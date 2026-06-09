@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Conversion System — Comparare Modele VC</title>
+    <meta name="description"
+        content="Sistem de conversie a vocii cu kNN-VC, FreeVC, YourTTS și Voice Cloning. Lucrare de master.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=20">
+</head>
+
+<body>
+
+    <!-- ============================================================= -->
+    <!-- SIDEBAR                                                        -->
+    <!-- ============================================================= -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">🎤</div>
+                <div class="logo-text">
+                    <span class="logo-title">VoiceConvert</span>
+                    <span class="logo-subtitle">Research System v2</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Principal</div>
+            <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
+                <span class="nav-icon">📊</span><span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-page="speakers" id="nav-speakers">
+                <span class="nav-icon">👤</span><span>Vorbitori</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Antrenare</div>
+            <a href="#" class="nav-item" data-page="training" id="nav-training">
+                <span class="nav-icon">🏋️</span>
+                <span>Antrenare Modele</span>
+                <span class="nav-badge" id="training-badge" style="display:none">●</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Conversii Audio</div>
+            <a href="#" class="nav-item" data-page="convert" id="nav-convert">
+                <span class="nav-icon">🔄</span><span>kNN-VC</span>
+            </a>
+            <!-- kNN-VC XLS-R Pro ascuns -->
+            <a href="#" class="nav-item" data-page="convert-freevc" id="nav-convert-freevc">
+                <span class="nav-icon">🎙️</span><span>FreeVC</span>
+            </a>
+            <!-- <a href="#" class="nav-item" data-page="convert-rvc" id="nav-convert-rvc">
+                <span class="nav-icon">🎯</span><span>RVC</span>
+            </a> -->
+            <a href="#" class="nav-item" data-page="convert-yourtts" id="nav-convert-yourtts">
+                <span class="nav-icon">🌍</span><span>YourTTS</span>
+            </a>
+            <!-- LightVC ascuns -->
+            <a href="#" class="nav-item" data-page="voice-clone" id="nav-voice-clone">
+                <span class="nav-icon">📝</span><span>Voice Cloning</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Analiză & Comparație</div>
+            <a href="#" class="nav-item nav-item-compare" data-page="compare" id="nav-compare">
+                <span class="nav-icon">⚖️</span><span>Comparație Modele</span>
+            </a>
+            <a href="#" class="nav-item" data-page="history" id="nav-history">
+                <span class="nav-icon">📁</span><span>Istoric</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="system-status" id="system-status">
+                <div class="status-dot"></div>
+                <span id="status-text">Se incarca...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============================================================= -->
+    <!-- MAIN CONTENT                                                   -->
+    <!-- ============================================================= -->
+    <main class="main-content">
+
+        <!-- ===== DASHBOARD ===== -->
+        <section class="page active" id="page-dashboard">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <p class="page-description">Sistem de Conversie a Vocii — Privire de ansamblu</p>
+            </div>
+
+            <div class="stats-grid stats-grid-5">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#667eea,#764ba2)">🎤</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-speakers">0</div>
+                        <div class="stat-label">Vorbitori</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c)">🔄</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-conversions">0</div>
+                        <div class="stat-label">Conversii</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">🖥️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="stat-device">CPU</div>
+                        <div class="stat-label">Device</div>
+                    </div>
+                </div>
+                <div class="stat-card model-card-knn">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">🧠</div>
+                    <div class="stat-info">
+                        <div class="stat-value" style="font-size:1rem">kNN-VC</div>
+                        <div class="stat-label">Pre-antrenat ✓</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)">🌍</div>
+                    <div class="stat-info">
+                        <div class="stat-value" style="font-size:1rem">YourTTS</div>
+                        <div class="stat-label">Pre-antrenat ✓</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)">📝</div>
+                    <div class="stat-info">
+                        <div class="stat-value" style="font-size:1rem">Voice Clone</div>
+                        <div class="stat-label">XTTS v2 ✓</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)">🎙️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" style="font-size:1rem">FreeVC</div>
+                        <div class="stat-label">Pre-antrenat ✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- kNN-VC Architecture -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🏗️ Arhitectura kNN-VC</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="architecture-flow">
+                            <div class="arch-step">
+                                <div class="arch-icon">🎵</div>
+                                <div class="arch-label">Audio Sursă</div>
+                                <div class="arch-detail">Input</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight">
+                                <div class="arch-icon">🧠</div>
+                                <div class="arch-label">WavLM-Large</div>
+                                <div class="arch-detail">1024-dim</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight">
+                                <div class="arch-icon">🔍</div>
+                                <div class="arch-label">k-NN Match</div>
+                                <div class="arch-detail">k=4</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight">
+                                <div class="arch-icon">🔊</div>
+                                <div class="arch-label">HiFi-GAN</div>
+                                <div class="arch-detail">Vocoder</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step">
+                                <div class="arch-icon">✨</div>
+                                <div class="arch-label">Output</div>
+                                <div class="arch-detail">Convertit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- YourTTS Architecture -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🌍 Arhitectura YourTTS</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="architecture-flow">
+                            <div class="arch-step">
+                                <div class="arch-icon">🎵</div>
+                                <div class="arch-label">Audio Sursă</div>
+                                <div class="arch-detail">Input</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight-orange">
+                                <div class="arch-icon">🗣️</div>
+                                <div class="arch-label">Whisper STT</div>
+                                <div class="arch-detail">Text</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight-orange">
+                                <div class="arch-icon">🌍</div>
+                                <div class="arch-label">VITS TTS</div>
+                                <div class="arch-detail">Multi-Spk</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight-orange">
+                                <div class="arch-icon">🔊</div>
+                                <div class="arch-label">HiFi-GAN</div>
+                                <div class="arch-detail">Vocoder</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step">
+                                <div class="arch-icon">✨</div>
+                                <div class="arch-label">Output</div>
+                                <div class="arch-detail">Convertit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- FreeVC Architecture -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h2>🎙️ Arhitectura FreeVC</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="architecture-flow">
+                            <div class="arch-step">
+                                <div class="arch-icon">🎵</div>
+                                <div class="arch-label">Audio Sursă</div>
+                                <div class="arch-detail">Input</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"
+                                style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1rem;">
+                                <div class="arch-icon">📦</div>
+                                <div class="arch-label">SpeechT5 Enc.</div>
+                                <div class="arch-detail">Features</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"
+                                style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1rem;">
+                                <div class="arch-icon">👤</div>
+                                <div class="arch-label">Speaker Emb.</div>
+                                <div class="arch-detail">X-Vector</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"
+                                style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1rem;">
+                                <div class="arch-icon">🔊</div>
+                                <div class="arch-label">SpeechT5 Dec.</div>
+                                <div class="arch-detail">Vocoder</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step">
+                                <div class="arch-icon">✨</div>
+                                <div class="arch-label">Output</div>
+                                <div class="arch-detail">Convertit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Voice Cloning Architecture -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h2>📝 Arhitectura Voice Cloning</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="architecture-flow">
+                            <div class="arch-step">
+                                <div class="arch-icon">🎵</div>
+                                <div class="arch-label">Audio Sursă</div>
+                                <div class="arch-detail">Input</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"
+                                style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1rem;">
+                                <div class="arch-icon">🗣️</div>
+                                <div class="arch-label">Whisper STT</div>
+                                <div class="arch-detail">Text</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"
+                                style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1rem;">
+                                <div class="arch-icon">🧠</div>
+                                <div class="arch-label">XTTS v2</div>
+                                <div class="arch-detail">LLM TTS</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"
+                                style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1rem;">
+                                <div class="arch-icon">🔊</div>
+                                <div class="arch-label">HiFi-GAN</div>
+                                <div class="arch-detail">Vocoder</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step">
+                                <div class="arch-icon">✨</div>
+                                <div class="arch-label">Output</div>
+                                <div class="arch-detail">Convertit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrici -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📊 Metrici Disponibile</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="metrics-list">
+                            <div class="metric-item"><span class="metric-badge lower">MCD</span><span>Mel Cepstral
+                                    Distortion (dB) ↓</span></div>
+                            <div class="metric-item"><span class="metric-badge higher">PESQ</span><span>Perceptual
+                                    Evaluation of Speech Quality ↑</span></div>
+                            <div class="metric-item"><span class="metric-badge higher">Spk Sim.</span><span>Similaritate
+                                    vorbitor ECAPA-TDNN ↑</span></div>
+                            <div class="metric-item"><span class="metric-badge lower">F0 RMSE</span><span>Eroare pitch
+                                    fundamentală (Hz) ↓</span></div>
+                            <div class="metric-item"><span class="metric-badge higher">F0 PCC</span><span>Corelație
+                                    pitch Pearson ↑</span></div>
+                            <div class="metric-item"><span class="metric-badge higher">SNR</span><span>Signal-to-Noise
+                                    Ratio (dB) ↑</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quickstart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🚀 Flux de Lucru</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="quickstart-steps">
+                            <div class="qs-step"><span class="qs-num">1</span>
+                                <div><strong>Adaugă Vorbitori</strong>
+                                    <p>Pagina "Vorbitori" — upload fișiere audio referință</p>
+                                </div>
+                            </div>
+                            <div class="qs-step"><span class="qs-num">2</span>
+                                <div><strong>Conversie kNN-VC</strong>
+                                    <p>Testeaza modelul pre-antrenat</p>
+                                </div>
+                            </div>
+                            <div class="qs-step"><span class="qs-num">3</span>
+                                <div><strong>Testează YourTTS & FreeVC</strong>
+                                    <p>Conversie zero-shot</p>
+                                </div>
+                            </div>
+                            <div class="qs-step"><span class="qs-num">4</span>
+                                <div><strong>Compară Modelele</strong>
+                                    <p>Pagina "Comparație" — analiză side-by-side</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- <section class="page" id="page-convert-mknn">
+            <div class="page-header">
+                <h1>Conversie Voce — <span class="model-tag mknn">kNN-VC (XLS-R)</span></h1>
+                <p class="page-description">Model experimental multilingv bazat pe wav2vec2-xls-r-300m</p>
+                <div class="warning-box" style="margin-top:1rem;background:rgba(255,165,0,0.1);padding:1rem;border-left:4px solid orange">
+                    <span class="warning-icon">⚠️</span>
+                    <div>
+                        <strong>Avertisment Vocoder:</strong> Acest modul folosește potrivirea pe XLS-R (1024-dim), însă la final trece prin vocoderul vechi (WavLM). Rezultatul va avea distorsiuni sau zgomot de fond până la integrarea unui HiFi-GAN compatibil cu XLS-R. Funcționează pur ca Proof of Concept!
+                    </div>
+                </div>
+            </div>
+            
+                <!-- kNN-VC Architecture 
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header"><h2>🏗️ Arhitectura kNN-VC</h2></div>
+                    <div class="card-body">
+                        <div class="architecture-flow">
+                            <div class="arch-step"><div class="arch-icon">🎵</div><div class="arch-label">Audio Sursă</div><div class="arch-detail">Input</div></div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight"><div class="arch-icon">🧠</div><div class="arch-label">WavLM-Large</div><div class="arch-detail">1024-dim</div></div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight"><div class="arch-icon">🔍</div><div class="arch-label">k-NN Match</div><div class="arch-detail">k=4</div></div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step highlight"><div class="arch-icon">🔊</div><div class="arch-label">HiFi-GAN</div><div class="arch-detail">Vocoder</div></div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-step"><div class="arch-icon">✨</div><div class="arch-label">Output</div><div class="arch-detail">Convertit</div></div>
+                        </div>
+                    </div>
+                </div>
+
+            <div class="convert-layout">
+                <div class="card convert-card">
+                    <div class="card-header"><h2>🎵 Audio Sursă</h2></div>
+                    <div class="card-body">
+                        <div class="source-tabs">
+                            <button class="source-tab active" data-target="mknn" data-mode="upload" id="mknn-tab-upload">📂 Încarcă Fișier</button>
+                            <button class="source-tab" data-target="mknn" data-mode="record" id="mknn-tab-record">🎙 Înregistrează</button>
+                        </div>
+                        <div class="upload-zone" id="mknn-source-upload-zone">
+                            <div class="upload-icon">📂</div>
+                            <p class="upload-text">Trage fișierul audio sau click</p>
+                            <input type="file" id="mknn-source-file-input" accept="audio/*" hidden>
+                        </div>
+                        <div class="recorder-widget hidden" id="mknn-recorder">
+                            <div class="recorder-visualizer">
+                                <canvas id="mknn-recorder-canvas" height="60"></canvas>
+                            </div>
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="mknn-record-btn" data-target="mknn">
+                                    <span class="record-dot"></span> Înregistrează
+                                </button>
+                                <span class="recorder-timer" id="mknn-recorder-timer">00:00</span>
+                                <button class="btn-record-stop hidden" id="mknn-stop-btn" data-target="mknn">
+                                    ⏹ Oprește
+                                </button>
+                            </div>
+                            <div class="recorder-hint">Vorbește clar, la ~20cm de microfon.</div>
+                        </div>
+                        <div class="audio-preview hidden" id="mknn-source-preview">
+                            <div class="audio-filename" id="mknn-source-filename"></div>
+                            <audio controls id="mknn-source-audio" class="audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card convert-card">
+                    <div class="card-header"><h2>⚙️ Setări</h2></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="mknn-target-speaker-select">Vorbitor Țintă</label>
+                            <select id="mknn-target-speaker-select" class="form-select">
+                                <option value="">— Selectează vorbitor —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mknn-topk-slider">Parametru k (vecini kNN): <span id="mknn-topk-value">4</span></label>
+                            <input type="range" id="mknn-topk-slider" class="form-range" min="1" max="16" value="4" step="1">
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="mknn-convert-btn" disabled>
+                            <span class="btn-icon">🔄</span><span>Convertește Vocea</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card convert-card hidden" id="mknn-result-card">
+                    <div class="card-header"><h2>✨ Rezultat</h2></div>
+                    <div class="card-body">
+                        <div class="result-info" id="mknn-result-info"></div>
+                        <div class="audio-comparison">
+                            <div class="audio-column">
+                                <h3>Original</h3>
+                                <audio controls id="mknn-result-original" class="audio-player"></audio>
+                            </div>
+                            <div class="audio-column">
+                                <h3>Convertit (XLS-R)</h3>
+                                <audio controls id="mknn-result-converted" class="audio-player"></audio>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-overlay hidden" id="mknn-convert-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se procesează cu XLS-R 300M...</div>
+                <div class="loading-subtext">Poate dura câteva secunde</div>
+            </div>
+        </section> -->
+
+        <!-- ===== CONVERSIE kNN-VC ===== -->
+        <section class="page" id="page-convert">
+            <div class="page-header">
+                <h1>Conversie Voce — <span class="model-tag knn">kNN-VC</span></h1>
+
+            </div>
+
+            <!-- kNN-VC Architecture -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h2>🏗️ Arhitectura kNN-VC</h2>
+                </div>
+                <div class="card-body">
+                    <div class="architecture-flow">
+                        <div class="arch-step">
+                            <div class="arch-icon">🎵</div>
+                            <div class="arch-label">Audio Sursă</div>
+                            <div class="arch-detail">Input</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step highlight">
+                            <div class="arch-icon">🧠</div>
+                            <div class="arch-label">WavLM-Large</div>
+                            <div class="arch-detail">1024-dim</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step highlight">
+                            <div class="arch-icon">🔍</div>
+                            <div class="arch-label">k-NN Match</div>
+                            <div class="arch-detail">k=4</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step highlight">
+                            <div class="arch-icon">🔊</div>
+                            <div class="arch-label">HiFi-GAN</div>
+                            <div class="arch-detail">Vocoder</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step">
+                            <div class="arch-icon">✨</div>
+                            <div class="arch-label">Output</div>
+                            <div class="arch-detail">Convertit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="convert-layout">
+                <div class="card convert-card">
+                    <div class="card-header">
+                        <h2>🎵 Audio Sursă</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="source-tabs">
+                            <button class="source-tab active" data-target="knn" data-mode="upload"
+                                id="knn-tab-upload">📂 Încarcă Fișier</button>
+                            <button class="source-tab" data-target="knn" data-mode="record" id="knn-tab-record">🎙
+                                Înregistrează</button>
+                        </div>
+                        <div class="upload-zone" id="source-upload-zone">
+                            <div class="upload-icon">📂</div>
+                            <p class="upload-text">Trage fișierul audio sau click</p>
+                            <p class="upload-hint">WAV, MP3, FLAC, OGG, WebM</p>
+                            <input type="file" id="source-file-input" accept="audio/*" hidden>
+                        </div>
+                        <div class="recorder-widget hidden" id="knn-recorder">
+                            <div class="recorder-visualizer">
+                                <canvas id="knn-recorder-canvas" height="60"></canvas>
+                            </div>
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="knn-record-btn" data-target="knn">
+                                    <span class="record-dot"></span> Înregistrează
+                                </button>
+                                <span class="recorder-timer" id="knn-recorder-timer">00:00</span>
+                                <button class="btn-record-stop hidden" id="knn-stop-btn" data-target="knn">
+                                    ⏹ Oprește
+                                </button>
+                            </div>
+                            <div class="recorder-hint">Vorbește clar, aproape de microfon. Recomandat: 3-10 secunde.
+                            </div>
+                        </div>
+                        <div class="audio-preview hidden" id="source-preview">
+                            <div class="audio-filename" id="source-filename"></div>
+                            <audio controls id="source-audio" class="audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card convert-card">
+                    <div class="card-header">
+                        <h2>⚙️ Setări</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="target-speaker-select">Vorbitor Țintă</label>
+                            <select id="target-speaker-select" class="form-select">
+                                <option value="">— Selectează vorbitor —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="topk-slider">Parametru k (vecini kNN): <span id="topk-value">4</span></label>
+                            <input type="range" id="topk-slider" class="form-range" min="1" max="16" value="4" step="1">
+                            <div class="range-labels"><span>1 (natural)</span><span>16 (similar)</span></div>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="convert-btn" disabled>
+                            <span class="btn-icon">🔄</span><span>Convertește Vocea</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card convert-card hidden" id="result-card">
+                    <div class="card-header">
+                        <h2>✨ Rezultat</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="result-info" id="result-info"></div>
+                        <div class="audio-comparison">
+                            <div class="audio-column">
+                                <h3>Original</h3>
+                                <audio controls id="result-original" class="audio-player"></audio>
+                                <div class="stt-text" id="original-stt"
+                                    style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                            <div class="audio-column">
+                                <h3>Convertit (kNN-VC)</h3>
+                                <audio controls id="result-converted" class="audio-player"></audio>
+                                <div class="stt-text" id="converted-stt"
+                                    style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="evaluate-btn">
+                            <span class="btn-icon">📊</span><span>Evaluează Calitatea</span>
+                        </button>
+                        <div class="metrics-grid hidden" id="metrics-grid"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-overlay hidden" id="convert-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se convertește cu kNN-VC...</div>
+                <div class="loading-subtext">10-30 secunde</div>
+            </div>
+        </section>
+
+        <!-- ===== VORBITORI ===== -->
+        <section class="page" id="page-speakers">
+            <div class="page-header">
+                <h1>Vorbitori Țintă</h1>
+                <p class="page-description">Gestionează vorbitorii</p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2>➕ Adaugă Vorbitor Nou</h2>
+                </div>
+                <div class="card-body">
+                    <div class="add-speaker-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="speaker-name">Nume Vorbitor</label>
+                                <input type="text" id="speaker-name" class="form-input" placeholder="ex: Vorbitor A">
+                            </div>
+                            <div class="form-group">
+                                <label for="speaker-description">Descriere (opțional)</label>
+                                <input type="text" id="speaker-description" class="form-input"
+                                    placeholder="ex: Voce masculină, medie">
+                            </div>
+                        </div>
+                        <div class="upload-zone" id="speaker-upload-zone">
+                            <div class="upload-icon">📂</div>
+                            <p class="upload-text">Trage fișiere audio de referință (recomandat 3-5 WAV)</p>
+                            <input type="file" id="speaker-files-input" accept="audio/*" multiple hidden>
+                        </div>
+                        <div class="selected-files hidden" id="selected-files-list"></div>
+                        <button class="btn btn-primary" id="add-speaker-btn" disabled>
+                            <span class="btn-icon">➕</span><span>Adaugă Vorbitor</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card Recunoaștere Vorbitor -->
+            <div class="card" style="border: 2px solid var(--purple, #a855f7);">
+                <div class="card-header"
+                    style="background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(139,92,246,0.05));">
+                    <h2>🔍 Recunoaștere Vorbitor</h2>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">Încarcă sau înregistrează un audio, apoi
+                        apasă butonul pentru a identifica vorbitorul din lista celor înrolați.</p>
+                    <div class="source-tabs" style="margin-bottom: 1rem;">
+                        <button class="source-tab active" data-target="spkrec" data-mode="upload"
+                            id="spkrec-tab-upload">📁 Încarcă Fișier</button>
+                        <button class="source-tab" data-target="spkrec" data-mode="record" id="spkrec-tab-record">🎙
+                            Înregistrează</button>
+                    </div>
+                    <div class="upload-zone" id="spkrec-source-upload-zone" style="margin-bottom: 1rem;">
+                        <div class="upload-icon">🎵</div>
+                        <p class="upload-text">Trage fișierul audio sau click</p>
+                        <input type="file" id="spkrec-file-input" accept="audio/*" hidden>
+                    </div>
+                    <div class="recorder-widget hidden" id="spkrec-recorder">
+                        <div class="recorder-visualizer">
+                            <canvas id="spkrec-recorder-canvas" height="60"></canvas>
+                        </div>
+                        <div class="recorder-controls">
+                            <button class="btn-record" id="spkrec-record-btn" data-target="spkrec">
+                                <span class="record-dot"></span> Înregistrează
+                            </button>
+                            <span class="recorder-timer" id="spkrec-recorder-timer">00:00</span>
+                            <button class="btn-record-stop hidden" id="spkrec-stop-btn" data-target="spkrec">
+                                ⏹ Oprește
+                            </button>
+                        </div>
+                        <div class="recorder-hint">Vorbește clar, la ~20cm de microfon.</div>
+                    </div>
+                    <div class="audio-preview hidden" id="spkrec-source-preview" style="margin-bottom: 1rem;">
+                        <div class="audio-filename" id="spkrec-source-filename"></div>
+                        <audio controls id="spkrec-source-audio" class="audio-player"></audio>
+                    </div>
+                    <button class="btn btn-primary btn-lg" id="spkrec-recognize-btn" disabled
+                        style="width:100%; background: linear-gradient(135deg, #a855f7, #7c3aed);">
+                        <span class="btn-icon">🔍</span><span>Recunoaște Vorbitorul</span>
+                    </button>
+                    <div class="loading-overlay hidden" id="spkrec-loading"
+                        style="position: relative; margin-top: 1rem;">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">Se analizează vocea...</div>
+                    </div>
+                    <div class="hidden" id="spkrec-results" style="margin-top: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">📊 Rezultate Recunoaștere</h3>
+                        <div id="spkrec-results-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2>📋 Vorbitori Înregistrați</h2>
+                </div>
+                <div class="card-body">
+                    <div class="speakers-list" id="speakers-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">👤</div>
+                            <p>Nu există vorbitori înregistrați.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ANTRENARE LightVC ===== -->
+        <section class="page" id="page-training">
+            <div class="page-header">
+                <h1>Antrenare Modele <span class="badge badge-primary">Fine-Tuning</span></h1>
+                <p class="page-description">Ajustează modelele de inteligență artificială pe baza vocii în limba română.
+                </p>
+            </div>
+
+
+            </div>
+
+            <!-- Configurare antrenare -->
+
+
+            <!-- Progress antrenare (Generic/LightVC) -->
+
+
+            <!-- Configurare antrenare FreeVC -->
+            <div class="card" id="training-freevc-config-card" style="border: 2px solid var(--blue);">
+                <div class="card-header" style="background-color: var(--blue-light);">
+                    <h2>⚙️ Configurare Fine-Tuning FreeVC (SpeechT5)</h2>
+                </div>
+                <div class="card-body">
+                    <div class="training-config-grid">
+                        <div class="form-group">
+                            <label for="freevc-train-epochs">Număr Epoci</label>
+                            <input type="number" id="freevc-train-epochs" class="form-input" value="50" min="5"
+                                max="200" disabled>
+                            <small>Predefinit la 50</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Model Bază</label>
+                            <input type="text" class="form-input" value="microsoft/speecht5_vc" disabled>
+                            <small>Sursă: HuggingFace</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Device Alocat</label>
+                            <input type="text" class="form-input" value="GPU Dedicat (AMD)" disabled>
+                            <small>Folosind DirectML / PyTorch</small>
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button class="btn btn-primary btn-lg" id="start-freevc-train-btn">
+                            <span class="btn-icon">⚡</span><span>Pornește Fine-Tuning FreeVC</span>
+                        </button>
+                    </div>
+                    <div class="training-note">
+                        <strong>Atenție VRAM:</strong> Procesul consumă ~8-10GB memorie video.<br>
+                        <strong>Output:</strong> Modelul final va fi salvat automat în
+                        <code>checkpoints/freevc_finetuned/</code> și detectat la următoarea conversie!<br>
+                        <strong>Dataset:</strong> Common Voice RO — <code>dataset/cv-corpus-25.0-*</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress antrenare FreeVC -->
+            <div class="card hidden" id="training-freevc-progress-card">
+                <div class="card-header">
+                    <h2>📈 Progres Fine-Tuning FreeVC</h2>
+                </div>
+                <div class="card-body">
+                    <div class="progress-info-row">
+                        <span id="prog-freevc-epoch-text">Epoca 0 / 0</span>
+                        <span id="prog-freevc-loss-text">Loss: —</span>
+                        <span id="prog-freevc-eta-text">ETA: —</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="training-freevc-progress-bar"
+                            style="width:0%; background:linear-gradient(90deg, #4facfe, #00f2fe)"></div>
+                    </div>
+                    <div class="progress-message" id="prog-freevc-message">—</div>
+
+                    <!-- Loss curve chart FreeVC -->
+                    <div class="chart-container">
+                        <canvas id="loss-chart-freevc" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurare antrenare XTTS v2 -->
+            <div class="card" id="training-xtts-config-card" style="border: 2px solid var(--purple);">
+                <div class="card-header" style="background-color: var(--purple-light);">
+                    <h2>🧠 Configurare Fine-Tuning XTTS v2</h2>
+                </div>
+                <div class="card-body">
+                    <div class="training-config-grid">
+                        <div class="form-group">
+                            <label>Model Bază</label>
+                            <input type="text" class="form-input" value="Coqui XTTS v2 (multilingual)" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Dataset</label>
+                            <input type="text" class="form-input" value="dataset/cv-corpus-25.0-*" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Device Alocat</label>
+                            <input type="text" class="form-input" value="CPU (Compatibilitate AMD)" disabled>
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button class="btn btn-primary btn-lg" id="start-xtts-train-btn"
+                            style="background-color: var(--purple); border-color: var(--purple);">
+                            <span class="btn-icon">⚡</span><span>Pornește Fine-Tuning XTTS pe Română</span>
+                        </button>
+                    </div>
+                    <div class="training-note">
+                        <strong>Notă AMD:</strong> Deoarece XTTS necesită CUDA pentru antrenare pe GPU, acest proces va
+                        rula pe <strong>CPU</strong>. Poate dura ~8-12 ore.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress antrenare XTTS -->
+            <div class="card hidden" id="training-xtts-progress-card">
+                <div class="card-header">
+                    <h2>📈 Progres Fine-Tuning XTTS v2</h2>
+                </div>
+                <div class="card-body">
+                    <div class="progress-info-row">
+                        <span id="prog-xtts-epoch-text">Epoca 0 / 0</span>
+                        <span id="prog-xtts-loss-text">Loss: —</span>
+                        <span id="prog-xtts-eta-text">Timp: —</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="training-xtts-progress-bar"
+                            style="width:0%; background:linear-gradient(90deg, #b829ea, #7a08fa)"></div>
+                    </div>
+                    <div class="progress-message" id="prog-xtts-message">—</div>
+                </div>
+            </div>
+
+
+            <!-- Configurare antrenare RVC -->
+            <!-- <div class="card" id="training-rvc-config-card" style="border: 2px solid var(--orange);">
+                <div class="card-header" style="background-color: var(--orange-light);">
+                    <h2>🎙️ Antrenare Timbru Vocal RVC (per Speaker)</h2>
+                </div>
+                <div class="card-body">
+                    <div class="training-config-grid">
+                        <div class="form-group">
+                            <label for="rvc-speaker-select">Alege Vorbitorul Țintă</label>
+                            <select id="rvc-speaker-select" class="form-select">
+                                <option value="">-- Încarcă lista... --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Metodă Pitch</label>
+                            <input type="text" class="form-input" value="RMVPE (precizie înaltă)" disabled>
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button class="btn btn-primary btn-lg" id="start-rvc-train-btn"
+                            style="background-color: var(--orange); border-color: var(--orange);">
+                            <span class="btn-icon">🎭</span><span>Antrenează Model RVC</span>
+                        </button>
+                    </div>
+                    <div class="training-note">
+                        Această operațiune va antrena un model de post-procesare a timbrului vocal specific vorbitorului
+                        selectat.
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- Progress antrenare RVC -->
+            <!-- <div class="card hidden" id="training-rvc-progress-card">
+                <div class="card-header">
+                    <h2>📈 Progres Antrenare RVC</h2>
+                </div>
+                <div class="card-body">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="training-rvc-progress-bar"
+                            style="width:0%; background:linear-gradient(90deg, #ff8c00, #ff0080)"></div>
+                    </div>
+                    <div class="progress-message" id="prog-rvc-message">—</div>
+                </div>
+            </div> -->
+
+            <!-- Configurare antrenare YourTTS -->
+            <div class="card" id="training-yourtts-config-card" style="border: 2px solid #10b981;">
+                <div class="card-header" style="background-color: rgba(16,185,129,0.1);">
+                    <h2>🌍 Fine-Tuning YourTTS pe Common Voice RO</h2>
+                </div>
+                <div class="card-body">
+                    <div class="training-config-grid">
+                        <div class="form-group">
+                            <label>Dataset (Pregătit)</label>
+                            <input type="text" class="form-input" value="4550 clipuri (Train: 4106, Val: 444)" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Vorbitori</label>
+                            <input type="text" class="form-input" value="Top 20 vorbitori (echilibrat)" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Epoci & Batch</label>
+                            <input type="text" class="form-input" value="100 epoci | Batch: 4" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Procesare (Device & Audio)</label>
+                            <input type="text" class="form-input" value="CPU (32 fire) | 22050 Hz" disabled>
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button class="btn btn-primary btn-lg" id="start-yourtts-train-btn"
+                            style="background-color: #10b981; border-color: #10b981;">
+                            <span class="btn-icon">🌍</span><span>Pornește Fine-Tuning YourTTS</span>
+                        </button>
+                    </div>
+                    <div class="training-note">
+                        <strong>Notă:</strong> Antrenarea va utiliza direct dataset-ul pregătit
+                        `yourtts_prepared`. Din cauza operațiilor STFT cu numere complexe (care nu sunt suportate de
+                        DirectML/AMD), antrenarea YourTTS/VITS este forțată automat să ruleze pe procesor.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress antrenare YourTTS -->
+            <div class="card hidden" id="training-yourtts-progress-card">
+                <div class="card-header">
+                    <h2>📈 Progres Fine-Tuning YourTTS</h2>
+                </div>
+                <div class="card-body">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="training-yourtts-progress-bar"
+                            style="width:0%; background:linear-gradient(90deg, #10b981, #059669)"></div>
+                    </div>
+                    <div class="progress-message" id="prog-yourtts-message">—</div>
+
+                    <div class="chart-container" style="position: relative; height:30vh; width:100%; margin-top: 20px;">
+                        <canvas id="yourttsTrainingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== CONVERSIE LightVC ===== -->
+        <!-- <section class="page" id="page-convert-lightvc">
+            <div class="page-header">
+                <h1>Conversie Voce — <span class="model-tag lightvc">LightVC</span></h1>
+                <p class="page-description">Model antrenat pe date proprii (Common Voice RO)</p>
+            </div>
+
+            <div class="lightvc-not-trained hidden" id="lightvc-not-trained-warning">
+                <div class="warning-box">
+                    <span class="warning-icon">⚠️</span>
+                    <div>
+                        <strong>Modelul LightVC nu a fost antrenat încă.</strong>
+                        <p>Mergi la pagina <a href="#" onclick="navigateTo('training')">Antrenare LightVC</a> și pornește antrenarea.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="convert-layout" id="lightvc-convert-layout">
+                <div class="card convert-card">
+                    <div class="card-header"><h2>🎵 Audio Sursă</h2></div>
+                    <div class="card-body">
+                        <div class="source-tabs">
+                            <button class="source-tab active" data-target="lvc" data-mode="upload" id="lvc-tab-upload">📂 Încarcă Fișier</button>
+                            <button class="source-tab" data-target="lvc" data-mode="record" id="lvc-tab-record">🎙 Înregistrează</button>
+                        </div>
+                        <div class="upload-zone" id="lvc-source-upload-zone">
+                            <div class="upload-icon">📂</div>
+                            <p class="upload-text">Trage fișierul audio sau click</p>
+                            <input type="file" id="lvc-source-file-input" accept="audio/*" hidden>
+                        </div>
+                        <div class="recorder-widget hidden" id="lvc-recorder">
+                            <div class="recorder-visualizer">
+                                <canvas id="lvc-recorder-canvas" height="60"></canvas>
+                            </div>
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="lvc-record-btn" data-target="lvc">
+                                    <span class="record-dot"></span> Înregistrează
+                                </button>
+                                <span class="recorder-timer" id="lvc-recorder-timer">00:00</span>
+                                <button class="btn-record-stop hidden" id="lvc-stop-btn" data-target="lvc">
+                                    ⏹ Oprește
+                                </button>
+                            </div>
+                            <div class="recorder-hint">Vorbește clar, la ~20cm de microfon.</div>
+                        </div>
+                        <div class="audio-preview hidden" id="lvc-source-preview">
+                            <div class="audio-filename" id="lvc-source-filename"></div>
+                            <audio controls id="lvc-source-audio" class="audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card convert-card">
+                    <div class="card-header"><h2>⚙️ Setări</h2></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="lvc-target-speaker-select">Vorbitor Țintă</label>
+                            <select id="lvc-target-speaker-select" class="form-select">
+                                <option value="">— Selectează vorbitor —</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="lvc-convert-btn" disabled>
+                            <span class="btn-icon">⚡</span><span>Convertește cu LightVC</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card convert-card hidden" id="lvc-result-card">
+                    <div class="card-header"><h2>✨ Rezultat LightVC</h2></div>
+                    <div class="card-body">
+                        <div class="result-info" id="lvc-result-info"></div>
+                        <div class="audio-comparison">
+                            <div class="audio-column">
+                                <h3>Original</h3>
+                                <audio controls id="lvc-result-original" class="audio-player"></audio>
+                                <div class="stt-text" id="lvc-original-stt" style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                            <div class="audio-column">
+                                <h3>Convertit (LightVC)</h3>
+                                <audio controls id="lvc-result-converted" class="audio-player"></audio>
+                                <div class="stt-text" id="lvc-converted-stt" style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-overlay hidden" id="lvc-convert-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se convertește cu LightVC...</div>
+            </div>
+        </section> -->
+
+        <!-- ===== CONVERSIE FreeVC ===== -->
+        <section class="page" id="page-convert-freevc">
+            <div class="page-header">
+                <h1>Conversie Voce — <span class="model-tag" style="background-color:#3b82f6;color:white">FreeVC</span>
+                </h1>
+
+            </div>
+
+            <!-- FreeVC Architecture -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h2>🎙️ Arhitectura FreeVC</h2>
+                </div>
+                <div class="card-body">
+                    <div class="architecture-flow">
+                        <div class="arch-step">
+                            <div class="arch-icon">🎵</div>
+                            <div class="arch-label">Audio Sursă</div>
+                            <div class="arch-detail">Input</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step"
+                            style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1rem;">
+                            <div class="arch-icon">📦</div>
+                            <div class="arch-label">SpeechT5 Enc.</div>
+                            <div class="arch-detail">Features</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step"
+                            style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1rem;">
+                            <div class="arch-icon">👤</div>
+                            <div class="arch-label">Speaker Emb.</div>
+                            <div class="arch-detail">X-Vector</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step"
+                            style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1rem;">
+                            <div class="arch-icon">🔊</div>
+                            <div class="arch-label">SpeechT5 Dec.</div>
+                            <div class="arch-detail">Vocoder</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step">
+                            <div class="arch-icon">✨</div>
+                            <div class="arch-label">Output</div>
+                            <div class="arch-detail">Convertit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="convert-layout">
+                <div class="card convert-card">
+                    <div class="card-header">
+                        <h2>🎵 Audio Sursă</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="source-tabs">
+                            <button class="source-tab active" data-target="freevc" data-mode="upload"
+                                id="freevc-tab-upload">📂 Încarcă Fișier</button>
+                            <button class="source-tab" data-target="freevc" data-mode="record" id="freevc-tab-record">🎙
+                                Înregistrează</button>
+                        </div>
+                        <div class="upload-zone" id="freevc-source-upload-zone">
+                            <div class="upload-icon">📂</div>
+                            <p class="upload-text">Trage fișierul audio sau click</p>
+                            <input type="file" id="freevc-source-file-input" accept="audio/*" hidden>
+                        </div>
+                        <div class="recorder-widget hidden" id="freevc-recorder">
+                            <div class="recorder-visualizer">
+                                <canvas id="freevc-recorder-canvas" height="60"></canvas>
+                            </div>
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="freevc-record-btn" data-target="freevc">
+                                    <span class="record-dot"></span> Înregistrează
+                                </button>
+                                <span class="recorder-timer" id="freevc-recorder-timer">00:00</span>
+                                <button class="btn-record-stop hidden" id="freevc-stop-btn" data-target="freevc">
+                                    ⏹ Oprește
+                                </button>
+                            </div>
+                            <div class="recorder-hint">Vorbește clar, aproape de microfon.</div>
+                        </div>
+                        <div class="audio-preview hidden" id="freevc-source-preview">
+                            <div class="audio-filename" id="freevc-source-filename"></div>
+                            <audio controls id="freevc-source-audio" class="audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card convert-card">
+                    <div class="card-header">
+                        <h2>⚙️ Setări</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="freevc-target-speaker-select">Vorbitor Țintă</label>
+                            <select id="freevc-target-speaker-select" class="form-select">
+                                <option value="">— Selectează vorbitor —</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="freevc-convert-btn" disabled>
+                            <span class="btn-icon">🎙️</span><span>Convertește cu FreeVC</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card convert-card hidden" id="freevc-result-card">
+                    <div class="card-header">
+                        <h2>✨ Rezultat FreeVC</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="result-info" id="freevc-result-info"></div>
+                        <div class="audio-comparison">
+                            <div class="audio-column">
+                                <h3>Original</h3>
+                                <audio controls id="freevc-result-original" class="audio-player"></audio>
+                                <div class="stt-text" id="freevc-original-stt"
+                                    style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                            <div class="audio-column">
+                                <h3>Convertit (FreeVC)</h3>
+                                <audio controls id="freevc-result-converted" class="audio-player"></audio>
+                                <!-- <div class="stt-text" id="freevc-converted-stt"
+                                    style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-overlay hidden" id="freevc-convert-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se convertește cu FreeVC...</div>
+            </div>
+        </section>
+
+        <!-- ===== CONVERSIE RVC ===== -->
+        <!-- <section class="page" id="page-convert-rvc">
+            <div class="page-header">
+                <h1>Conversie Voce — <span class="model-tag" style="background-color:#3b82f6;color:white">RVC</span>
+                </h1>
+
+            </div>
+            <div class="convert-layout">
+                <div class="card convert-card">
+                    <div class="card-header">
+                        <h2>🎵 Audio Sursă</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="source-tabs">
+                            <button class="source-tab active" data-target="rvc" data-mode="upload"
+                                id="rvc-tab-upload">📂 Încarcă Fișier</button>
+                            <button class="source-tab" data-target="rvc" data-mode="record" id="rvc-tab-record">🎙
+                                Înregistrează</button>
+                        </div>
+                        <div class="upload-zone" id="rvc-source-upload-zone">
+                            <div class="upload-icon">📂</div>
+                            <p class="upload-text">Trage fișierul audio sau click</p>
+                            <input type="file" id="rvc-source-file-input" accept="audio/*" hidden>
+                        </div>
+                        <div class="recorder-widget hidden" id="rvc-recorder">
+                            <div class="recorder-visualizer">
+                                <canvas id="rvc-recorder-canvas" height="60"></canvas>
+                            </div>
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="rvc-record-btn" data-target="rvc">
+                                    <span class="record-dot"></span> Înregistrează
+                                </button>
+                                <span class="recorder-timer" id="rvc-recorder-timer">00:00</span>
+                                <button class="btn-record-stop hidden" id="rvc-stop-btn" data-target="rvc">
+                                    ⏹ Oprește
+                                </button>
+                            </div>
+                            <div class="recorder-hint">Vorbește clar, aproape de microfon.</div>
+                        </div>
+                        <div class="audio-preview hidden" id="rvc-source-preview">
+                            <div class="audio-filename" id="rvc-source-filename"></div>
+                            <audio controls id="rvc-source-audio" class="audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card convert-card">
+                    <div class="card-header">
+                        <h2>⚙️ Setări</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="rvc-target-speaker-select">Vorbitor Țintă</label>
+                            <select id="rvc-target-speaker-select" class="form-select">
+                                <option value="">— Selectează vorbitor —</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="rvc-convert-btn" disabled>
+                            <span class="btn-icon">🎙️</span><span>Convertește cu RVC</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card convert-card hidden" id="rvc-result-card">
+                    <div class="card-header">
+                        <h2>✨ Rezultat RVC</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="result-info" id="rvc-result-info"></div>
+                        <div class="audio-comparison">
+                            <div class="audio-column">
+                                <h3>Original</h3>
+                                <audio controls id="rvc-result-original" class="audio-player"></audio>
+                                <div class="stt-text" id="rvc-original-stt"
+                                    style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                            <div class="audio-column">
+                                <h3>Convertit (RVC)</h3>
+                                <audio controls id="rvc-result-converted" class="audio-player"></audio>
+                                <div class="stt-text" id="rvc-converted-stt"
+                                    style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-overlay hidden" id="rvc-convert-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se convertește cu RVC...</div>
+            </div>
+        </section> -->
+
+        <!-- ===== CONVERSIE YourTTS ===== -->
+        <section class="page" id="page-convert-yourtts">
+            <div class="page-header">
+                <h1>Conversie Voce — <span class="model-tag" style="background-color:#10b981;color:white">YourTTS</span>
+                </h1>
+
+            </div>
+
+
+            <!-- YourTTS Architecture -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h2>🌍 Arhitectura YourTTS</h2>
+                </div>
+                <div class="card-body">
+                    <div class="architecture-flow">
+                        <div class="arch-step">
+                            <div class="arch-icon">🎵</div>
+                            <div class="arch-label">Audio Sursă</div>
+                            <div class="arch-detail">Input</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step highlight-orange">
+                            <div class="arch-icon">🗣️</div>
+                            <div class="arch-label">Whisper STT</div>
+                            <div class="arch-detail">Text</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step highlight-orange">
+                            <div class="arch-icon">🌍</div>
+                            <div class="arch-label">VITS TTS</div>
+                            <div class="arch-detail">Multi-Spk</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step highlight-orange">
+                            <div class="arch-icon">🔊</div>
+                            <div class="arch-label">HiFi-GAN</div>
+                            <div class="arch-detail">Vocoder</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step">
+                            <div class="arch-icon">✨</div>
+                            <div class="arch-label">Output</div>
+                            <div class="arch-detail">Convertit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="conversion-grid">
+                <div class="card source-card">
+                    <div class="card-header">
+                        <h2>📁 Audio Sursă</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="source-tabs">
+                            <button class="source-tab active" data-target="yourtts" data-mode="upload"
+                                id="yourtts-tab-upload">📂 Încarcă Fișier</button>
+                            <button class="source-tab" data-target="yourtts" data-mode="record"
+                                id="yourtts-tab-record">🎙 Înregistrează</button>
+                        </div>
+                        <div class="upload-zone" id="yourtts-source-upload-zone">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Trage un fișier audio sau click</div>
+                            <input type="file" id="yourtts-source-file-input" accept="audio/*" hidden>
+                        </div>
+                        <div class="recorder-widget hidden" id="yourtts-recorder">
+                            <div class="recorder-vis">
+                                <canvas id="yourtts-recorder-canvas" height="60"></canvas>
+                            </div>
+                            <div class="recorder-controls">
+                                <button class="btn-record" id="yourtts-record-btn" data-target="yourtts">
+                                    <span class="record-dot"></span> Înregistrează
+                                </button>
+                                <span class="recorder-timer" id="yourtts-recorder-timer">00:00</span>
+                                <button class="btn-record-stop hidden" id="yourtts-stop-btn" data-target="yourtts">
+                                    ⬛ Stop
+                                </button>
+                            </div>
+                        </div>
+                        <div class="audio-preview hidden" id="yourtts-source-preview">
+                            <div class="audio-filename" id="yourtts-source-filename"></div>
+                            <audio controls id="yourtts-source-audio" class="audio-player"></audio>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card target-card">
+                    <div class="card-header">
+                        <h2>🎯 Vorbitor Țintă</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="yourtts-target-speaker-select">Vorbitor Țintă</label>
+                            <select id="yourtts-target-speaker-select" class="form-select">
+                                <option value="">Selectează vorbitorul...</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="yourtts-convert-btn" disabled>
+                            <span class="btn-icon">🌍</span><span>Convertește cu YourTTS</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card convert-card hidden" id="yourtts-result-card">
+                <div class="card-header">
+                    <h2>✨ Rezultat YourTTS</h2>
+                </div>
+                <div class="card-body">
+                    <div class="result-info" id="yourtts-result-info"></div>
+                    <div class="audio-comparison">
+                        <div class="audio-col">
+                            <h3>Original</h3>
+                            <audio controls id="yourtts-result-original" class="audio-player"></audio>
+                            <div class="stt-text" id="yourtts-original-stt"
+                                style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div>
+                        </div>
+                        <div class="audio-col">
+                            <h3>Convertit (YourTTS)</h3>
+                            <audio controls id="yourtts-result-converted" class="audio-player"></audio>
+                            <!-- <div class="stt-text" id="yourtts-converted-stt"
+                                style="margin-top:0.5rem;font-size:0.9rem;font-style:italic"></div> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading-overlay hidden" id="yourtts-convert-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se convertește cu YourTTS...</div>
+            </div>
+        </section>
+
+
+        <!-- ===== COMPARATIE MODELE ===== -->
+        <section class="page" id="page-compare">
+            <div class="page-header">
+                <h1>⚖️ Comparație Modele</h1>
+                <p class="page-description">Analiză side-by-side: kNN-VC, YourTTS, FreeVC și Voice Clone</p>
+            </div>
+
+            <!-- Input comparatie -->
+            <div class="card compare-input-card">
+                <div class="card-header">
+                    <h2>🎯 Configurare Comparație</h2>
+                </div>
+                <div class="card-body">
+                    <div class="compare-input-grid">
+                        <div class="form-group">
+                            <label>🎵 Audio Sursă</label>
+                            <div class="source-tabs source-tabs-sm">
+                                <button class="source-tab active" data-target="cmp" data-mode="upload"
+                                    id="cmp-tab-upload">📂 Fișier</button>
+                                <button class="source-tab" data-target="cmp" data-mode="record" id="cmp-tab-record">🎙
+                                    Înreg.</button>
+                            </div>
+                            <div class="upload-zone upload-zone-sm" id="cmp-upload-zone">
+                                <div class="upload-icon" style="font-size:1.5rem">📂</div>
+                                <p class="upload-text" style="font-size:0.85rem">Click sau drag & drop</p>
+                                <input type="file" id="cmp-source-input" accept="audio/*" hidden>
+                            </div>
+                            <div class="recorder-widget recorder-widget-sm hidden" id="cmp-recorder">
+                                <div class="recorder-visualizer">
+                                    <canvas id="cmp-recorder-canvas" height="40"></canvas>
+                                </div>
+                                <div class="recorder-controls">
+                                    <button class="btn-record btn-record-sm" id="cmp-record-btn" data-target="cmp">
+                                        <span class="record-dot"></span> Rec
+                                    </button>
+                                    <span class="recorder-timer" id="cmp-recorder-timer">00:00</span>
+                                    <button class="btn-record-stop hidden" id="cmp-stop-btn" data-target="cmp">
+                                        ⏹ Stop
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="audio-preview hidden" id="cmp-source-preview">
+                                <audio controls id="cmp-source-audio" class="audio-player"></audio>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>👤 Vorbitor Țintă</label>
+                            <select id="cmp-speaker-select" class="form-select">
+                                <option value="">— Selectează vorbitor —</option>
+                            </select>
+                            <br>
+                            <label for="cmp-topk">Parametru k (kNN-VC): <span id="cmp-topk-val">4</span></label>
+                            <input type="range" id="cmp-topk-slider" class="form-range" min="1" max="16" value="4">
+                        </div>
+                        <div class="compare-run-col">
+                            <button class="btn btn-compare btn-lg" id="compare-btn" disabled>
+                                <span class="btn-icon">⚖️</span><span>Compară Toate 4 Modelele</span>
+                            </button>
+                            <div class="compare-note">Rulează cele 4 modele simultan și calculează metrici +
+                                transcripții</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rezultate comparatie -->
+            <div class="hidden" id="compare-results"
+                style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem;">
+
+                <!-- STT pentru Sursa (Mutat sus) -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-body" style="padding: 1rem;">
+                        <h4 style="margin-top:0; margin-bottom:0.5rem; font-size:0.9rem; color:#6b7280;">Transcripție
+                            Originală Sursă (Whisper STT):</h4>
+                        <div id="cmp-source-stt" style="font-size: 1.1rem; font-style: italic; margin-bottom: 1rem;">—
+                        </div>
+                        <audio controls id="cmp-source-audio" class="audio-player"
+                            style="margin-bottom: 0.5rem; display: none;" data-filename=""></audio>
+                        <button class="btn btn-secondary btn-sm toggle-plots-btn" data-target="source"
+                            style="width: 100%;">🔍 Analiză Spectrală Sursă</button>
+                        <div class="plots-container hidden" id="cmp-source-plots"
+                            style="margin-top: 15px; text-align: center;">
+                            <div class="plot-loading" id="cmp-source-plot-loading"
+                                style="font-size: 0.85rem; color: #6b7280; padding: 1rem;">Se generează graficele...
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;">
+                                <img id="cmp-source-plot-spectrogram" src="" alt="Spectrogramă Liniară"
+                                    style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <img id="cmp-source-plot-mel" src="" alt="Mel-Spectrogramă"
+                                    style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <img id="cmp-source-plot-mfcc" src="" alt="MFCC"
+                                    style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modelele de Conversie (Vertical Stack) -->
+                <div class="compare-players-stack" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                    <!-- kNN-VC -->
+                    <div class="compare-player-card card">
+                        <div class="model-header-knn"
+                            style="padding: 0.75rem; border-radius: 6px 6px 0 0; background: #f3f4f6;">
+                            <span class="model-tag knn">kNN-VC</span>
+                            <!-- <span class="model-subtitle">Pre-antrenat · Baas et al. 2023</span> -->
+                        </div>
+                        <div class="card-body">
+                            <div class="cmp-time-badge" id="cmp-knn-time" style="float: right;">— ms</div>
+                            <audio controls id="cmp-knn-audio" class="audio-player" style="margin-bottom: 0.5rem;"
+                                data-filename=""></audio>
+                            <div class="stt-text" id="cmp-knn-stt" style="margin-bottom: 1rem;"></div>
+                            <div class="cmp-metrics" id="cmp-knn-metrics"></div>
+                            <button class="btn btn-secondary btn-sm toggle-plots-btn" data-target="knn"
+                                style="margin-top: 10px; width: 100%;">🔍 Analiză Spectrală</button>
+                            <div class="plots-container hidden" id="cmp-knn-plots"
+                                style="margin-top: 15px; text-align: center;">
+                                <div class="plot-loading" id="cmp-knn-plot-loading"
+                                    style="font-size: 0.85rem; color: #6b7280; padding: 1rem;">Se generează graficele...
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;">
+                                    <img id="cmp-knn-plot-spectrogram" src="" alt="Spectrogramă Liniară"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-knn-plot-mel" src="" alt="Mel-Spectrogramă"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-knn-plot-mfcc" src="" alt="MFCC"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- YourTTS -->
+                    <div class="compare-player-card card">
+                        <div class="model-header-yourtts"
+                            style="padding: 0.75rem; border-radius: 6px 6px 0 0; background: #f3f4f6;">
+                            <span class="model-tag yourtts">YourTTS</span>
+                            <!-- <span class="model-subtitle">Antrenat · Common Voice RO</span> -->
+                        </div>
+                        <div class="card-body">
+                            <div class="cmp-time-badge" id="cmp-yourtts-time" style="float: right;">— ms</div>
+                            <audio controls id="cmp-yourtts-audio" class="audio-player" style="margin-bottom: 0.5rem;"
+                                data-filename=""></audio>
+                            <div class="stt-text" id="cmp-yourtts-stt" style="margin-bottom: 1rem;"></div>
+                            <div class="cmp-metrics" id="cmp-yourtts-metrics"></div>
+                            <button class="btn btn-secondary btn-sm toggle-plots-btn" data-target="yourtts"
+                                style="margin-top: 10px; width: 100%;">🔍 Analiză Spectrală</button>
+                            <div class="plots-container hidden" id="cmp-yourtts-plots"
+                                style="margin-top: 15px; text-align: center;">
+                                <div class="plot-loading" id="cmp-yourtts-plot-loading"
+                                    style="font-size: 0.85rem; color: #6b7280; padding: 1rem;">Se generează graficele...
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;">
+                                    <img id="cmp-yourtts-plot-spectrogram" src="" alt="Spectrogramă Liniară"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-yourtts-plot-mel" src="" alt="Mel-Spectrogramă"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-yourtts-plot-mfcc" src="" alt="MFCC"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FreeVC -->
+                    <div class="compare-player-card card">
+                        <div
+                            style="background-color: #3b82f6; color: white; padding: 0.5rem; text-align: center; border-radius: 6px 6px 0 0;">
+                            <span style="font-weight:bold; font-size: 1.1rem;">FreeVC</span>
+                            <!-- <div style="font-size:0.8rem; opacity:0.9;">Pre-antrenat · VITS Zero-shot</div> -->
+                        </div>
+                        <div class="card-body">
+                            <div class="cmp-time-badge" id="cmp-freevc-time" style="float: right;">— ms</div>
+                            <audio controls id="cmp-freevc-audio" class="audio-player" style="margin-bottom: 0.5rem;"
+                                data-filename=""></audio>
+                            <div class="stt-text" id="cmp-freevc-stt" style="margin-bottom: 1rem;"></div>
+                            <div class="cmp-metrics" id="cmp-freevc-metrics"></div>
+                            <button class="btn btn-secondary btn-sm toggle-plots-btn" data-target="freevc"
+                                style="margin-top: 10px; width: 100%;">🔍 Analiză Spectrală</button>
+                            <div class="plots-container hidden" id="cmp-freevc-plots"
+                                style="margin-top: 15px; text-align: center;">
+                                <div class="plot-loading" id="cmp-freevc-plot-loading"
+                                    style="font-size: 0.85rem; color: #6b7280; padding: 1rem;">Se generează graficele...
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;">
+                                    <img id="cmp-freevc-plot-spectrogram" src="" alt="Spectrogramă Liniară"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-freevc-plot-mel" src="" alt="Mel-Spectrogramă"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-freevc-plot-mfcc" src="" alt="MFCC"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Cloning TTS -->
+                    <div class="compare-player-card card">
+                        <div
+                            style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; padding: 0.5rem; text-align: center; border-radius: 6px 6px 0 0;">
+                            <span style="font-weight:bold; font-size: 1.1rem;">Voice Clone</span>
+                            <div style="font-size:0.8rem; opacity:0.9;">XTTS-v2 · STT→TTS</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="cmp-time-badge" id="cmp-clone-time" style="float: right;">— ms</div>
+                            <audio controls id="cmp-clone-audio" class="audio-player" style="margin-bottom: 0.5rem;"
+                                data-filename=""></audio>
+                            <div class="stt-text" id="cmp-clone-stt" style="margin-bottom: 1rem;"></div>
+                            <div class="cmp-metrics" id="cmp-clone-metrics"></div>
+                            <button class="btn btn-secondary btn-sm toggle-plots-btn" data-target="clone"
+                                style="margin-top: 10px; width: 100%;">🔍 Analiză Spectrală</button>
+                            <div class="plots-container hidden" id="cmp-clone-plots"
+                                style="margin-top: 15px; text-align: center;">
+                                <div class="plot-loading" id="cmp-clone-plot-loading"
+                                    style="font-size: 0.85rem; color: #6b7280; padding: 1rem;">Se generează graficele...
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;">
+                                    <img id="cmp-clone-plot-spectrogram" src="" alt="Spectrogramă Liniară"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-clone-plot-mel" src="" alt="Mel-Spectrogramă"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img id="cmp-clone-plot-mfcc" src="" alt="MFCC"
+                                        style="width: 32%; min-width: 280px; border-radius: 4px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar chart comparativ -->
+            <div class="card" id="radar-card">
+                <div class="card-header">
+                    <h2>📊 Comparație Metrici</h2>
+                    <button class="btn btn-sm btn-secondary" id="export-compare-btn">📥 Export CSV</button>
+                </div>
+                <div class="card-body">
+                    <div class="radar-layout">
+                        <div class="radar-chart-container">
+                            <canvas id="radar-chart"></canvas>
+                        </div>
+                        <div class="metrics-compare-table" id="metrics-compare-table"></div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="loading-overlay hidden" id="compare-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Se rulează modelele...</div>
+                <div class="loading-subtext">kNN-VC + YourTTS + FreeVC + Voice Clone în paralel</div>
+            </div>
+        </section>
+
+        <!-- ===== VOICE CLONING (STT -> TTS) ===== -->
+        <section class="page" id="page-voice-clone">
+            <div class="page-header">
+                <h1>Voice Cloning <span class="badge badge-primary">STT → TTS</span></h1>
+
+            </div>
+
+            <!-- Voice Cloning Architecture -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h2>📝 Arhitectura Voice Cloning</h2>
+                </div>
+                <div class="card-body">
+                    <div class="architecture-flow">
+                        <div class="arch-step">
+                            <div class="arch-icon">🎵</div>
+                            <div class="arch-label">Audio Sursă</div>
+                            <div class="arch-detail">Input</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step"
+                            style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1rem;">
+                            <div class="arch-icon">🗣️</div>
+                            <div class="arch-label">Whisper STT</div>
+                            <div class="arch-detail">Text</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step"
+                            style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1rem;">
+                            <div class="arch-icon">🧠</div>
+                            <div class="arch-label">XTTS v2</div>
+                            <div class="arch-detail">LLM TTS</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step"
+                            style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1rem;">
+                            <div class="arch-icon">🔊</div>
+                            <div class="arch-label">HiFi-GAN</div>
+                            <div class="arch-detail">Vocoder</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-step">
+                            <div class="arch-icon">✨</div>
+                            <div class="arch-label">Output</div>
+                            <div class="arch-detail">Convertit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>1. Configurează Clonarea</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Sursă Audio (vocea care dictează):</label>
+                            <div class="source-tabs">
+                                <button class="source-tab active" data-target="clone" data-mode="upload"
+                                    id="clone-tab-upload">📂 Încarcă Fișier</button>
+                                <button class="source-tab" data-target="clone" data-mode="record"
+                                    id="clone-tab-record">🎙 Înregistrează</button>
+                            </div>
+                            <div class="upload-zone" id="clone-source-upload-zone">
+                                <div class="upload-icon">📂</div>
+                                <p class="upload-text">Trage fișierul audio sau click</p>
+                                <p class="upload-hint">WAV, MP3, FLAC, OGG, WebM</p>
+                                <input type="file" id="clone-file-input" accept="audio/*" hidden>
+                            </div>
+                            <div class="recorder-widget hidden" id="clone-recorder">
+                                <div class="recorder-visualizer">
+                                    <canvas id="clone-recorder-canvas" height="60"></canvas>
+                                </div>
+                                <div class="recorder-controls">
+                                    <button class="btn-record" id="clone-record-btn" data-target="clone">
+                                        <span class="record-dot"></span> Înregistrează
+                                    </button>
+                                    <span class="recorder-timer" id="clone-recorder-timer">00:00</span>
+                                    <button class="btn-record-stop hidden" id="clone-stop-btn" data-target="clone">
+                                        ⏹ Oprește
+                                    </button>
+                                </div>
+                                <div class="recorder-hint">Vorbește clar, aproape de microfon. Recomandat: 3-10
+                                    secunde.</div>
+                            </div>
+                            <div class="audio-preview hidden" id="clone-source-preview">
+                                <div class="audio-filename" id="clone-source-filename"></div>
+                                <audio controls id="clone-source-audio" class="audio-player"></audio>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="clone-target-speaker-select">Vorbitor Țintă (vocea dorită):</label>
+                            <select id="clone-target-speaker-select" class="form-select">
+                                <option value="">Încarcă vorbitorii...</option>
+                            </select>
+                        </div>
+
+                        <button id="btn-clone-voice" class="btn btn-primary" style="width:100%;margin-top:1rem">
+                            🪄 Clonează Vocea (STT → TTS)
+                        </button>
+
+                        <div id="clone-loading" class="hidden" style="margin-top:1rem;text-align:center">
+                            <div class="loading-spinner"></div>
+                            <p style="margin-top:10px;color:var(--text-muted)">Se procesează...</p>
+                            <p style="font-size:0.85rem;color:var(--text-light)">Whisper transcrie textul, XTTS-v2
+                                sintetizează vocea...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>2. Rezultat STT → TTS</h2>
+                    </div>
+                    <div class="card-body" id="clone-result-body">
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <p>Aici va apărea textul transcris și vocea clonată.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ISTORIC ===== -->
+        <section class="page" id="page-history">
+            <div class="page-header">
+                <h1>Istoric Conversii</h1>
+                <p class="page-description">Toate conversiile realizate</p>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="history-list" id="history-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">📁</div>
+                            <p>Nu există conversii în istoric.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast notifications -->
+    <div id="toast-container"></div>
+
+    <script src="/static/js/app.js?v=20"></script>
+</body>
+
+</html>
