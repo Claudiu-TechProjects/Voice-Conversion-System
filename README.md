@@ -1,5 +1,4 @@
-# Voice Conversion Platform
-# Voice Conversion Platform
+# Voice Conversion 
 
 Platformă web pentru conversia vocii folosind 4 modele de Deep Learning: **kNN-VC**, **FreeVC**, **YourTTS** și **Whisper + XTTS-v2 + RVC**, plus un modul de recunoaștere a vorbitorului bazat pe **ECAPA-TDNN**.
 
